@@ -60,16 +60,18 @@ export const AdModal: React.FC<AdModalProps> = ({ isOpen, onAdComplete, onClose 
     const randomAd = AD_CREATIVES[Math.floor(Math.random() * AD_CREATIVES.length)];
     setCurrentCreative(randomAd);
 
-    // 1. Immediately launch Real Monetag Interstitial Ad (Zone: 11697097)
+    // 1. Immediately launch your real Monetag Interstitial Ad (uses whatever
+    //    zone ID you set in frontend/.env as VITE_MONETAG_ZONE_ID)
     (async () => {
       setIsCallingRealAd(true);
       const isReady = await waitForMonetagSdk(1800);
 
-      if (isReady && typeof window.show_11697097 === 'function') {
+      if (isReady) {
         setMonetagState('showing');
         try {
-          // Trigger actual Monetag Ad function provided by https://libtl.com/sdk.js
-          await window.show_11697097();
+          // Trigger the actual Monetag ad function provided by https://libtl.com/sdk.js
+          const result = await triggerRealMonetagAd();
+          if (!result.success) throw new Error(result.error || 'Ad did not complete');
           setRealAdPlayed(true);
           setMonetagState('finished');
           if (!completedRef.current) {
@@ -85,7 +87,7 @@ export const AdModal: React.FC<AdModalProps> = ({ isOpen, onAdComplete, onClose 
           setIsCallingRealAd(false);
         }
       } else {
-        // Monetag script might be ad-blocked in developer environment or slow network
+        // No zone ID configured yet, or the SDK is ad-blocked / slow network
         setMonetagState('blocked');
         setIsCallingRealAd(false);
       }

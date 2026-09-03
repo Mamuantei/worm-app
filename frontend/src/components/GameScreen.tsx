@@ -93,10 +93,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     setPayoutResult(null);
   };
 
-  // Handle Game Over & calculate rewards in INR:
+  // Handle Game Over & calculate rewards in INR (client-side numbers here
+  // are purely for the celebration animation/display — the backend
+  // recomputes and pays the authoritative amount independently, see
+  // backend/src/routes/wallet.js REWARDS):
   // Base play: ₹0.10 for playing
   // Win bonus: +₹0.10 if he wins
-  // Draw/Tie bonus: +₹0.50 if it's a tie
+  // Draw/Tie bonus: +₹0.05 if it's a tie
   const handleGameOver = useCallback((winResult: 'X' | 'O' | 'draw') => {
     if (hasRewardedRef.current) return;
     hasRewardedRef.current = true;
@@ -121,7 +124,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       }
     } else if (winResult === 'draw') {
       result = 'draw';
-      bonus = 0.50; // Draw / Tie bonus ₹0.50
+      bonus = 0.05; // Draw / Tie bonus ₹0.05
       sounds.playDraw();
     } else {
       result = 'loss';

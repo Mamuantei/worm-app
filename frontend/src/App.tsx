@@ -13,6 +13,7 @@ import { WalletScreen } from './components/WalletScreen';
 import { ReferralScreen } from './components/ReferralScreen';
 import { AdminPortal } from './components/AdminPortal';
 import { AdminLoginModal } from './components/AdminLoginModal';
+import { AdminGateModal } from './components/AdminGateModal';
 import { AdModal } from './components/AdModal';
 import { GuideModal } from './components/GuideModal';
 import { Navigation } from './components/Navigation';
@@ -67,6 +68,7 @@ export default function App() {
   const [isMatchUnlocked, setIsMatchUnlocked] = useState<boolean>(false);
   const [isAdModalOpen, setIsAdModalOpen] = useState<boolean>(false);
   const [isGuideModalOpen, setIsGuideModalOpen] = useState<boolean>(false);
+  const [isAdminGateOpen, setIsAdminGateOpen] = useState<boolean>(false);
   const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState<boolean>(false);
   const [adminToken, setAdminToken] = useState<string | null>(() => sessionStorage.getItem(ADMIN_TOKEN_KEY));
   const [soundEnabled, setSoundEnabled] = useState<boolean>(getSoundPreference);
@@ -241,6 +243,19 @@ export default function App() {
     await refreshAdminData(adminToken);
   };
 
+  const requestAdminAccess = () => {
+    if (isAdminUnlocked) {
+      setActiveTab('admin');
+    } else {
+      setIsAdminGateOpen(true);
+    }
+  };
+
+  const handleAdminGatePass = () => {
+    setIsAdminGateOpen(false);
+    setIsAdminLoginModalOpen(true);
+  };
+
   const handleAdminLoginSuccess = (token: string) => {
     sessionStorage.setItem(ADMIN_TOKEN_KEY, token);
     setAdminToken(token);
@@ -286,8 +301,8 @@ export default function App() {
         pendingWithdrawalsCount={pendingWithdrawalsCount}
         onToggleSound={handleToggleSound}
         onOpenWallet={() => setActiveTab('wallet')}
-        onOpenAdmin={() => (isAdminUnlocked ? setActiveTab('admin') : setIsAdminLoginModalOpen(true))}
-        onTriggerAdminLogin={() => (isAdminUnlocked ? setActiveTab('admin') : setIsAdminLoginModalOpen(true))}
+        onOpenAdmin={requestAdminAccess}
+        onTriggerAdminLogin={requestAdminAccess}
       />
 
       <main className="flex-1 w-full max-w-md mx-auto">
@@ -302,7 +317,7 @@ export default function App() {
                 onOpenWallet={() => setActiveTab('wallet')}
                 onOpenReferral={() => setActiveTab('referral')}
                 onOpenGuide={() => setIsGuideModalOpen(true)}
-                onOpenAdmin={() => (isAdminUnlocked ? setActiveTab('admin') : setIsAdminLoginModalOpen(true))}
+                onOpenAdmin={requestAdminAccess}
               />
             </motion.div>
           )}
@@ -380,6 +395,7 @@ export default function App() {
 
       <AdModal isOpen={isAdModalOpen} onAdComplete={handleAdComplete} onClose={() => setIsAdModalOpen(false)} />
       <GuideModal isOpen={isGuideModalOpen} onClose={() => setIsGuideModalOpen(false)} />
+      <AdminGateModal isOpen={isAdminGateOpen} onClose={() => setIsAdminGateOpen(false)} onPass={handleAdminGatePass} />
       <AdminLoginModal isOpen={isAdminLoginModalOpen} onClose={() => setIsAdminLoginModalOpen(false)} onSuccess={handleAdminLoginSuccess} />
 
       <Navigation
@@ -387,7 +403,7 @@ export default function App() {
         isAdminUnlocked={isAdminUnlocked}
         pendingWithdrawalsCount={pendingWithdrawalsCount}
         onTabChange={(tab) => {
-          if (tab === 'admin' && !isAdminUnlocked) { setIsAdminLoginModalOpen(true); return; }
+          if (tab === 'admin' && !isAdminUnlocked) { requestAdminAccess(); return; }
           setActiveTab(tab);
         }}
         onPlayClick={handleInitiatePlay}

@@ -13,7 +13,7 @@ const REWARDS = {
   adUnlock: 0, // watching the ad only unlocks a match; no reward by itself
   gameBase: 0.10,
   winBonus: 0.10,
-  drawBonus: 0.50,
+  drawBonus: 0.05,
   lossBonus: 0.00,
   referralCommissionRate: 0.10, // referrer earns 10% of what their referred friend earns
 };

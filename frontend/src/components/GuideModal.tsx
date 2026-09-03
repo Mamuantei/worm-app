@@ -60,7 +60,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({ isOpen, onClose }) => {
                 <div className="text-slate-400 mt-0.5 space-y-1 leading-relaxed">
                   <div>• <strong className="text-emerald-400 font-mono">+₹0.10</strong> guaranteed every time you play a match (currently vs AI/Ranked Bot — live human matchmaking is coming soon).</div>
                   <div>• <strong className="text-emerald-400 font-mono">+₹0.10</strong> victory bonus if you win (total ₹0.20).</div>
-                  <div>• <strong className="text-emerald-400 font-mono">+₹0.50</strong> tie bonus if match ends in a draw (total ₹0.60).</div>
+                  <div>• <strong className="text-emerald-400 font-mono">+₹0.05</strong> tie bonus if match ends in a draw (total ₹0.15).</div>
                 </div>
               </div>
             </div>

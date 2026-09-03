@@ -308,40 +308,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </motion.div>
       )}
 
-      {/* Live Recent Matches / Leaderboard Preview */}
-      <div className="bg-[#0f172a]/70 rounded-2xl border border-slate-800 p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-1.5">
-            <Trophy className="w-4 h-4 text-amber-400" />
-            <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Live Player Payouts (INR)</span>
-          </div>
-          <span className="text-[11px] text-slate-500 font-mono">Real-time</span>
-        </div>
-
-        <div className="space-y-2">
-          {[
-            { user: '@rohit_gamer', action: 'Won Worm Match vs AI', amount: '+₹20.00', time: '1m ago', flag: '🇮🇳' },
-            { user: '@priya_win', action: 'Draw Match vs Real Player', amount: '+₹60.00', time: '3m ago', flag: '🇮🇳' },
-            { user: '@aryan_tech', action: 'UPI Transfer Completed', amount: '-₹100.00', time: '5m ago', flag: '🇮🇳' },
-          ].map((item, idx) => (
-            <div
-              key={idx}
-              className="flex items-center justify-between text-xs py-2 px-3 rounded-xl bg-[#020617]/70 border border-slate-800/70"
-            >
-              <div className="flex items-center gap-2">
-                <span>{item.flag}</span>
-                <span className="font-bold text-slate-200">{item.user}</span>
-                <span className="text-slate-400 text-[11px]">{item.action}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className={`font-mono font-bold ${item.amount.startsWith('+') ? 'text-emerald-400' : 'text-sky-400'}`}>
-                  {item.amount}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* The old "Live Player Payouts" block here showed hardcoded fake
+          usernames and fake amounts as if they were real activity — removed.
+          A genuine version of this would need a real activity feed endpoint
+          on the backend (recent real completed withdrawals, opt-in) rather
+          than fabricated rows. Ask if you want that built. */}
     </div>
   );
 };

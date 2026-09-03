@@ -118,11 +118,47 @@ money payouts. You'll use this username/password inside the app's Admin tab.
 1. In `frontend/`, create a file called `.env` with:
    ```
    VITE_API_URL=https://your-backend-url-here
+   VITE_MONETAG_ZONE_ID=your-zone-id-here
    ```
-   You don't have this URL yet — come back after Step 8 and fill it in, then
-   rebuild (Step 9).
+   You don't have the backend URL yet — come back after Step 8 and fill it
+   in, then rebuild (Step 9). See **Real Ads Setup** below for the zone ID.
 2. The Telegram Mini App SDK is loaded automatically when opened inside
    Telegram — no extra setup needed there.
+
+---
+
+## Real Ads Setup (Monetag)
+
+The app comes with real ad-network code already wired in (Monetag) — but it
+needs **your own** account and zone ID, not a shared/example one, or any ad
+revenue would go to someone else instead of you.
+
+1. Go to [monetag.com](https://monetag.com) and sign up as a publisher.
+2. Add your Mini App's URL as a new site/app in the Monetag dashboard (you
+   can come back and update this after Step 9 once you have your real
+   Vercel URL — Monetag lets you edit it later).
+3. Monetag will review your submission — this can take anywhere from a few
+   hours to a couple of days. Ad-based real-money apps sometimes get extra
+   scrutiny, so make sure your app description to them is accurate.
+4. Once approved, Monetag gives you a **Zone ID** (a number) for a
+   Rewarded Interstitial / In-App Interstitial ad unit — pick that ad
+   format, since it's the one already wired into this app's ad-unlock flow.
+5. Copy that Zone ID and set it in `frontend/.env`:
+   ```
+   VITE_MONETAG_ZONE_ID=your-real-zone-id
+   ```
+6. Also add this same variable in Vercel: go to your Vercel project →
+   **Settings → Environment Variables** → add `VITE_MONETAG_ZONE_ID` with
+   your zone ID → redeploy (Vercel → Deployments → click the three dots on
+   the latest deploy → **Redeploy**).
+
+**Until you do this,** the app still works — the "watch ad to unlock"
+screen just falls back to a plain 5-second timer instead of a real ad,
+so nothing breaks while you wait for Monetag approval.
+
+**If you want a second ad network too** (for redundancy or more revenue),
+that's a separate integration each network needs its own SDK — happy to
+wire one in whenever you've picked one.
 
 ---
 
@@ -153,6 +189,8 @@ Pick one (Render is the simplest for beginners):
    - Go to [vercel.com](https://vercel.com) → New Project → import your repo
    - Root directory: `frontend`
    - Add environment variable `VITE_API_URL` = your backend URL
+   - Add environment variable `VITE_MONETAG_ZONE_ID` = your zone ID (once
+     you have one — see Real Ads Setup above; safe to leave blank for now)
    - Deploy. Vercel gives you a URL like `https://worm-app.vercel.app`.
 
 ---
@@ -200,6 +238,11 @@ Only after this works should you promote the bot to real users.
   that isn't built yet. Happy to build that next if you want it.
 - Reward amounts are decided by the server, not the user's browser, so
   they can't be edited/cheated client-side.
+- Admin access now requires answering a security question ("Worm" →
+  "fire and lightning") before the real login screen even appears, then a
+  real password check on top of that.
+- The old fake "Live Player Payouts" activity feed (hardcoded fake
+  usernames winning money) is gone from the home screen.
 
 ## If something doesn't work
 

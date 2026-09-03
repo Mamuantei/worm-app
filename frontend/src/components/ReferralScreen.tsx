@@ -43,7 +43,7 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
   const handleTelegramShare = () => {
     sounds.playClick();
     const shareText = encodeURIComponent(
-      `🎮 Play Tic-Tac-Toe on Worm (Telegram) and earn real cash every match (+₹0.10 play, +₹0.10 win, +₹0.50 tie)! Withdraw instantly to UPI & Bank: ${referralLink}`
+      `🎮 Play Tic-Tac-Toe on Worm (Telegram) and earn real cash every match (+₹0.10 play, +₹0.10 win, +₹0.05 tie)! Withdraw to UPI & Bank: ${referralLink}`
     );
     window.open(`https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${shareText}`, '_blank');
   };

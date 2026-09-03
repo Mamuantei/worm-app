@@ -7,47 +7,27 @@
       "lastName": "",
       "username": "",
       "phoneNumber": "",
-      "balance": 0.1,
-      "totalEarned": 0.1,
+      "balance": 0,
+      "totalEarned": 0,
       "totalWithdrawn": 0,
       "referralEarnings": 0,
-      "totalGames": 1,
+      "totalGames": 0,
       "wins": 0,
       "draws": 0,
-      "losses": 1,
+      "losses": 0,
       "referralCode": "WORM_user-1",
       "referredBy": null,
-      "createdAt": "2026-09-02T17:24:43.470Z"
+      "createdAt": "2026-09-03T11:08:46.076Z"
     }
   },
   "withdrawals": [],
-  "adEvents": [
-    {
-      "id": "6a01e677-45be-476d-b5fa-af3c2caa9e01",
-      "userId": "dev-user-1",
-      "createdAt": "2026-09-02T17:27:10.821Z"
-    }
-  ],
-  "gameEvents": [
-    {
-      "id": "010c099e-54e1-4474-981a-67b27c240b85",
-      "userId": "dev-user-1",
-      "result": "loss",
-      "base": 0.1,
-      "bonus": 0,
-      "total": 0.1,
-      "createdAt": "2026-09-02T17:27:14.546Z"
-    }
-  ],
+  "adEvents": [],
+  "gameEvents": [],
   "referralEvents": [],
   "admins": [
     {
-      "username": "myusername",
-      "passwordHash": "3bd7b26e9d1d23beca7696a9252f2e91:36ca581ea80cc60c0ef5bf2a529ebcdb55150925e9c234e719f6e97be301eaff096a05bee675f43cc2f908217903dbc987cec369101e2e36ac866f2979b04e11"
-    },
-    {
       "username": "mamuantei",
-      "passwordHash": "da8e09b54805a9ad70b1b997001c7602:1971aa7f38a574a864cb9292c887cfb5f35b426047f20cfed55d9747943a07601a7988ef26601f1ee9e1d29f84ae56a08eca880061d1ad5167c6e99b02b94425"
+      "passwordHash": "a38e7864e909227e15510a9f69632b8d:d5a391923eb08819563a2e04db23ffb5b93a63732e7eb0772138eaa4f8612bb3245441f76d4d9aea9334616a65b3764dd717ed9e7208779acb5b7539d360e28a"
     }
   ]
 }
