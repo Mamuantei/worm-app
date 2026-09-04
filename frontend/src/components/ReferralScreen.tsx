@@ -31,7 +31,14 @@ export const ReferralScreen: React.FC<ReferralScreenProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
 
-  const referralLink = `https://t.me/WormEarnBot?start=ref_${referralCode}`;
+  // Set VITE_TELEGRAM_BOT_USERNAME in frontend/.env to your real bot's
+  // username (e.g. Worm776_bot) — without this, the link falls back to a
+  // placeholder and won't open your actual bot.
+  const botUsername = (import.meta.env.VITE_TELEGRAM_BOT_USERNAME as string | undefined) || 'YOUR_BOT_USERNAME';
+  // `startapp` (not `start`) is required so this link opens the Mini App
+  // directly with the referral code attached — see App.tsx, which reads
+  // it from Telegram's start_param and sends it to the backend as `ref`.
+  const referralLink = `https://t.me/${botUsername}?startapp=${referralCode}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(referralLink);
