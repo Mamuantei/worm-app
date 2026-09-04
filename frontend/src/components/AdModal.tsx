@@ -162,20 +162,27 @@ export const AdModal: React.FC<AdModalProps> = ({ isOpen, onAdComplete, onClose 
               </span>
               <div className="flex flex-col">
                 <span className="text-[11px] font-black uppercase tracking-wider text-slate-200">
-                  Monetag Real Network Ad
+                  {realAdPlayed ? 'Monetag Real Network Ad' : 'Match Unlock'}
                 </span>
                 <span className="text-[9px] font-mono text-slate-400">
-                  Zone ID: {MONETAG_ZONE_ID}
+                  {realAdPlayed ? `Zone ID: ${MONETAG_ZONE_ID}` : 'Ad unavailable — timed unlock'}
                 </span>
               </div>
             </div>
 
             <div className="flex items-center gap-1.5">
               {isAdCompleted ? (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                  <span>Ad Verified</span>
-                </span>
+                realAdPlayed ? (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                    <span>Ad Verified</span>
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-700/40 text-slate-300 border border-slate-600/40 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-slate-400" />
+                    <span>Unlocked</span>
+                  </span>
+                )
               ) : (
                 <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 flex items-center gap-1">
                   <Loader2 className="w-3 h-3 animate-spin text-sky-400" />
@@ -206,7 +213,7 @@ export const AdModal: React.FC<AdModalProps> = ({ isOpen, onAdComplete, onClose 
                 </div>
                 <div>
                   <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <span>Monetag Rewarded Stream</span>
+                    <span>{realAdPlayed ? 'Monetag Rewarded Stream' : 'Unlocking Match'}</span>
                     {realAdPlayed && (
                       <span className="text-[9px] bg-emerald-500 text-slate-950 px-1.5 py-0.2 rounded font-black">
                         DELIVERED
@@ -215,10 +222,12 @@ export const AdModal: React.FC<AdModalProps> = ({ isOpen, onAdComplete, onClose 
                   </div>
                   <div className="text-[10px] text-slate-400 font-mono">
                     {isCallingRealAd
-                      ? 'Displaying live Monetag interstitial…'
+                      ? 'Loading live Monetag interstitial…'
+                      : isAdCompleted && realAdPlayed
+                      ? 'Ad watched — match unlocked'
                       : isAdCompleted
-                      ? 'Reward unlocked: +₹0.10'
-                      : 'Watching sponsor ad stream…'}
+                      ? 'No ad available right now — unlocked by timer'
+                      : 'Waiting for ad network…'}
                   </div>
                 </div>
               </div>
@@ -262,16 +271,18 @@ export const AdModal: React.FC<AdModalProps> = ({ isOpen, onAdComplete, onClose 
                 </p>
               </div>
 
-              {/* Verified Badge */}
+              {/* Status Badge — honest about whether this is a real ad or filler */}
               <div className="relative z-10 mt-2 flex items-center justify-between text-[10px] text-white/80 pt-2 border-t border-white/15">
                 <span className="flex items-center gap-1">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
-                  <span>Official Monetag Partner</span>
+                  <span>{realAdPlayed ? 'Delivered via Monetag' : 'Placeholder — no ad network configured'}</span>
                 </span>
-                <span className="font-bold underline cursor-pointer hover:text-white flex items-center gap-0.5">
-                  <span>{currentCreative.ctaText}</span>
-                  <ExternalLink className="w-3 h-3" />
-                </span>
+                {realAdPlayed && (
+                  <span className="font-bold underline cursor-pointer hover:text-white flex items-center gap-0.5">
+                    <span>{currentCreative.ctaText}</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </span>
+                )}
               </div>
             </div>
 
