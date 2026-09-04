@@ -1,26 +1,16 @@
 declare global {
   interface Window {
-    [key: string]: any; // Monetag injects a function named `show_<yourZoneId>`
-    monetagSdkLoaded?: boolean;
-    Telegram?: {
-      WebApp?: {
-        version?: string;
-        isVersionAtLeast?: (version: string) => boolean;
-        showAlert?: (message: string, callback?: () => void) => void;
-        showPopup?: (params: unknown, callback?: (buttonId: string) => void) => void;
-        ready?: () => void;
-        expand?: () => void;
-      };
-    };
+    [key: string]: any; // Monetag injects a function named `show_<zoneId>`
   }
 }
 
-// Set this to YOUR OWN Monetag zone ID (see SETUP.md "Real Ads" section for
-// how to get one). Until you set this, ads won't actually load — the app
-// falls back to a plain "watch for N seconds" unlock instead of pretending
-// an ad played. VITE_MONETAG_ZONE_ID is read from frontend/.env.
+// Your real Monetag zone ID, set in frontend/.env as VITE_MONETAG_ZONE_ID
+// (see SETUP.md "Real Ads Setup"). This mirrors exactly the install snippet
+// Monetag's dashboard gives you:
+//
+//   <script src='//libtl.com/sdk.js' data-zone='YOUR_ZONE_ID' data-sdk='show_YOUR_ZONE_ID'></script>
+//
 export const MONETAG_ZONE_ID = import.meta.env.VITE_MONETAG_ZONE_ID || '';
-export const MONETAG_SDK_URL = 'https://libtl.com/sdk.js';
 
 function showFnName(): string {
   return `show_${MONETAG_ZONE_ID}`;
@@ -31,51 +21,32 @@ export function isMonetagConfigured(): boolean {
 }
 
 /**
- * Ensures the Monetag SDK script tag is present in the DOM. No-ops if you
- * haven't set your zone ID yet.
+ * Injects the Monetag SDK script tag once. No-ops if no zone ID is set.
  */
 export function ensureMonetagSdk(): void {
   if (typeof window === 'undefined' || !isMonetagConfigured()) return;
+  if (document.querySelector(`script[data-zone="${MONETAG_ZONE_ID}"]`)) return;
 
-  const existing = document.querySelector(`script[data-zone="${MONETAG_ZONE_ID}"]`);
-  if (!existing) {
-    const script = document.createElement('script');
-    script.src = MONETAG_SDK_URL;
-    script.setAttribute('data-zone', MONETAG_ZONE_ID);
-    script.setAttribute('data-sdk', showFnName());
-    script.async = true;
-    script.onload = () => {
-      window.monetagSdkLoaded = true;
-    };
-    script.onerror = (err) => {
-      console.warn('Monetag external script failed to load:', err);
-    };
-    document.head.appendChild(script);
-  }
+  const script = document.createElement('script');
+  script.src = '//libtl.com/sdk.js';
+  script.setAttribute('data-zone', MONETAG_ZONE_ID);
+  script.setAttribute('data-sdk', showFnName());
+  document.head.appendChild(script);
 }
 
-/**
- * Checks if the Monetag SDK is ready to be called.
- */
 export function isMonetagReady(): boolean {
-  if (typeof window === 'undefined' || !isMonetagConfigured()) return false;
-  return typeof window[showFnName()] === 'function';
+  return isMonetagConfigured() && typeof window[showFnName()] === 'function';
 }
 
-/**
- * Wait for Monetag SDK to become available if still loading.
- */
-export function waitForMonetagSdk(timeoutMs = 3000): Promise<boolean> {
+/** Waits (briefly) for the SDK script to finish loading and register its function. */
+export function waitForMonetagSdk(timeoutMs = 4000): Promise<boolean> {
   if (isMonetagReady()) return Promise.resolve(true);
   ensureMonetagSdk();
 
   return new Promise((resolve) => {
-    const startTime = Date.now();
+    const start = Date.now();
     const interval = setInterval(() => {
-      if (isMonetagReady()) {
-        clearInterval(interval);
-        resolve(true);
-      } else if (Date.now() - startTime >= timeoutMs) {
+      if (isMonetagReady() || Date.now() - start >= timeoutMs) {
         clearInterval(interval);
         resolve(isMonetagReady());
       }
@@ -84,37 +55,19 @@ export function waitForMonetagSdk(timeoutMs = 3000): Promise<boolean> {
 }
 
 /**
- * Directly invoke the real Monetag Interstitial/Rewarded ad format.
+ * Shows the real Monetag Rewarded Interstitial ad — the exact
+ * `show_XXX().then(...)` call from Monetag's own snippet, wrapped so the
+ * caller gets a simple true/false instead of having to handle the Promise
+ * directly.
  */
-export async function triggerRealMonetagAd(): Promise<{ success: boolean; error?: string }> {
-  if (!isMonetagConfigured()) {
-    return { success: false, error: 'No Monetag zone ID configured (VITE_MONETAG_ZONE_ID).' };
-  }
-  try {
-    const ready = await waitForMonetagSdk(2500);
-    if (!ready || typeof window[showFnName()] !== 'function') {
-      return { success: false, error: 'Monetag SDK not loaded yet' };
-    }
-    await window[showFnName()]();
-    return { success: true };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.warn('Monetag execution returned:', msg);
-    return { success: false, error: msg };
-  }
-}
+export async function showRewardedInterstitial(): Promise<boolean> {
+  const ready = await waitForMonetagSdk();
+  if (!ready) return false;
 
-/**
- * Safely shows an alert in the Telegram WebApp without triggering
- * 'Method showPopup is not supported in version 6.0' on old clients.
- */
-export function safeTelegramAlert(message: string): void {
   try {
-    const tg = window.Telegram?.WebApp;
-    if (tg && typeof tg.isVersionAtLeast === 'function' && tg.isVersionAtLeast('6.2') && typeof tg.showAlert === 'function') {
-      tg.showAlert(message);
-    }
+    await window[showFnName()]();
+    return true; // user watched the ad
   } catch {
-    // Ignore any Telegram alert errors
+    return false; // ad failed to load / was skipped / no fill
   }
 }

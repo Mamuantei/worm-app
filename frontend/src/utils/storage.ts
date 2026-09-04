@@ -21,22 +21,3 @@ export function saveSoundPreference(enabled: boolean): void {
     // ignore
   }
 }
-
-// Ad creatives shown while a rewarded ad "plays" in the demo AdModal. These
-// are just placeholder sponsor cards for the unlock screen, not financial
-// claims — swap in your real ad network's creative feed here.
-export const AD_CREATIVES = [
-  {
-    id: 'ad-placeholder-1',
-    title: 'Sponsor Slot 1',
-    sponsor: 'Your Ad Network',
-    tagline: 'Wire this up to your real ad SDK',
-    description: 'Replace with a real rewarded-ad creative from your ad network.',
-    category: 'Placeholder',
-    rewardText: 'Unlock Match',
-    bannerGradient: 'from-blue-600 via-indigo-600 to-cyan-500',
-    badge: 'SPONSORED',
-    ctaText: 'Learn More',
-    iconType: 'game' as const,
-  },
-];
