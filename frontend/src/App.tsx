@@ -137,7 +137,7 @@ export default function App() {
     });
   };
 
-  // Every Play click now opens the Monetag Rewarded Popup directly.
+  // Every Play click opens the Monetag Rewarded Popup directly.
   // The match is unlocked only after show_11716044('pop') resolves.
   const handleInitiatePlay = async () => {
     if (isPlayAdLoading) return;
@@ -330,7 +330,6 @@ export default function App() {
                 onOpenReferral={() => setActiveTab('referral')}
                 onOpenGuide={() => setIsGuideModalOpen(true)}
                 onOpenAdmin={requestAdminAccess}
-                isPlayAdLoading={isPlayAdLoading}
               />
             </motion.div>
           )}
