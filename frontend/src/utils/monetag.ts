@@ -1,6 +1,6 @@
 declare global {
   interface Window {
-    [key: string]: any; // Monetag registers show_<zoneId>
+    [key: string]: any;
   }
 }
 
@@ -12,14 +12,15 @@ function showFnName(): string {
 }
 
 export function isMonetagConfigured(): boolean {
-  return Boolean(MONETAG_ZONE_ID);
+  return true;
 }
 
 export function isMonetagReady(): boolean {
-  return isMonetagConfigured() && typeof window[showFnName()] === 'function';
+  return typeof window !== 'undefined' && typeof window[showFnName()] === 'function';
 }
 
-/** Wait for the statically-loaded Monetag SDK to register show_<zoneId>. */
+/** Wait only for diagnostics/preloading. Do NOT await this before a popup click,
+ * because the browser/Telegram WebView can lose the user's gesture activation. */
 export function waitForMonetagSdk(timeoutMs = 10000): Promise<boolean> {
   if (isMonetagReady()) return Promise.resolve(true);
 
@@ -35,35 +36,46 @@ export function waitForMonetagSdk(timeoutMs = 10000): Promise<boolean> {
 }
 
 /** Rewarded Interstitial: show_<zoneId>() */
-export async function showRewardedInterstitial(): Promise<boolean> {
-  const ready = await waitForMonetagSdk();
-  if (!ready) {
-    console.warn(`[Monetag] show_${MONETAG_ZONE_ID} is not available.`);
-    return false;
+export function showRewardedInterstitial(): Promise<boolean> {
+  if (!isMonetagReady()) {
+    console.warn(`[Monetag] show_${MONETAG_ZONE_ID} is not available yet.`);
+    return Promise.resolve(false);
   }
 
   try {
-    await window[showFnName()]();
-    return true;
+    // Keep this call synchronous with the user's click.
+    return Promise.resolve(window[showFnName()]()).then(
+      () => true,
+      (error) => {
+        console.warn('[Monetag] Rewarded interstitial failed:', error);
+        return false;
+      },
+    );
   } catch (error) {
     console.warn('[Monetag] Rewarded interstitial failed:', error);
-    return false;
+    return Promise.resolve(false);
   }
 }
 
-/** Rewarded Popup: show_<zoneId>('pop') */
-export async function showRewardedPopup(): Promise<boolean> {
-  const ready = await waitForMonetagSdk();
-  if (!ready) {
-    console.warn(`[Monetag] show_${MONETAG_ZONE_ID} is not available.`);
-    return false;
+/** Rewarded Popup: show_<zoneId>('pop'). Must be called directly from the click handler. */
+export function showRewardedPopup(): Promise<boolean> {
+  if (!isMonetagReady()) {
+    console.warn(`[Monetag] show_${MONETAG_ZONE_ID} is not available yet.`);
+    return Promise.resolve(false);
   }
 
   try {
-    await window[showFnName()]('pop');
-    return true;
+    // IMPORTANT: do not await anything before this call.
+    // Monetag needs the original Play-button user gesture for the popup.
+    return Promise.resolve(window[showFnName()]('pop')).then(
+      () => true,
+      (error) => {
+        console.warn('[Monetag] Rewarded popup failed:', error);
+        return false;
+      },
+    );
   } catch (error) {
     console.warn('[Monetag] Rewarded popup failed:', error);
-    return false;
+    return Promise.resolve(false);
   }
 }
