@@ -13,8 +13,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Worm Rewarded Interstitial zone: 11716044 -->
-    <script src="https://libtl.com/sdk.js" data-zone="11716044" data-sdk="show_11716044"></script>
+    <!-- Static Monetag install tag, exactly matching their official
+         snippet — using a script already present in the page from the
+         start (rather than one injected by JS after load) rules out any
+         WebView restriction on runtime-injected third-party scripts.
+         %VITE_MONETAG_ZONE_ID% is filled in by Vite at build time from
+         frontend/.env — see SETUP.md "Real Ads Setup". -->
+    <script src="https://libtl.com/sdk.js" data-zone="%VITE_MONETAG_ZONE_ID%" data-sdk="show_%VITE_MONETAG_ZONE_ID%"></script>
   </head>
   <body class="bg-[#020617] text-slate-100 antialiased min-h-screen">
     <div id="root">
