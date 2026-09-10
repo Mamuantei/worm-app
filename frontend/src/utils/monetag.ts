@@ -4,10 +4,8 @@ declare global {
   }
 }
 
-// Keep the known Rewarded Interstitial zone working even when the deployment
-// platform has not been given VITE_MONETAG_ZONE_ID yet. Vercel can still
-// override this with its environment variable when needed.
-const DEFAULT_MONETAG_ZONE_ID = '11697097';
+// Monetag Rewarded Interstitial zone supplied for Worm.
+const DEFAULT_MONETAG_ZONE_ID = '11716044';
 export const MONETAG_ZONE_ID =
   String(import.meta.env.VITE_MONETAG_ZONE_ID || DEFAULT_MONETAG_ZONE_ID).trim();
 
@@ -24,7 +22,7 @@ export function isMonetagReady(): boolean {
 }
 
 /** Wait for the statically-loaded Monetag SDK to register show_<zoneId>. */
-export function waitForMonetagSdk(timeoutMs = 8000): Promise<boolean> {
+export function waitForMonetagSdk(timeoutMs = 10000): Promise<boolean> {
   if (isMonetagReady()) return Promise.resolve(true);
 
   return new Promise((resolve) => {
@@ -38,15 +36,22 @@ export function waitForMonetagSdk(timeoutMs = 8000): Promise<boolean> {
   });
 }
 
+/**
+ * Show the Monetag Rewarded Interstitial.
+ * The caller's reward callback runs only after this promise resolves true.
+ */
 export async function showRewardedInterstitial(): Promise<boolean> {
   const ready = await waitForMonetagSdk();
-  if (!ready) return false;
+  if (!ready) {
+    console.warn(`[Monetag] show_${MONETAG_ZONE_ID} is not available.`);
+    return false;
+  }
 
   try {
     await window[showFnName()]();
     return true;
   } catch (error) {
-    console.warn('[Monetag] Rewarded ad failed:', error);
+    console.warn('[Monetag] Rewarded interstitial failed:', error);
     return false;
   }
 }
