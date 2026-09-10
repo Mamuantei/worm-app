@@ -19,6 +19,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Lightweight request logging so issues can be diagnosed from Render's Logs
+// tab — logs method, path, and whether a Telegram session header was present.
+app.use((req, res, next) => {
+  const hasInitData = Boolean(req.header('x-telegram-init-data'));
+  console.log(`[req] ${req.method} ${req.path} — telegram-init-data: ${hasInitData ? 'present' : 'MISSING'}`);
+  next();
+});
+
 app.get('/health', (req, res) => res.json({ ok: true }));
 
 app.use('/api/wallet', walletRouter);

@@ -1,15 +1,15 @@
 declare global {
   interface Window {
-    [key: string]: any; // Monetag injects a function named `show_<zoneId>`
+    [key: string]: any; // Monetag registers a function named `show_<zoneId>`
   }
 }
 
 // Your real Monetag zone ID, set in frontend/.env as VITE_MONETAG_ZONE_ID
-// (see SETUP.md "Real Ads Setup"). This mirrors exactly the install snippet
-// Monetag's dashboard gives you:
-//
-//   <script src='//libtl.com/sdk.js' data-zone='YOUR_ZONE_ID' data-sdk='show_YOUR_ZONE_ID'></script>
-//
+// (see SETUP.md "Real Ads Setup"). The actual <script> tag is static in
+// index.html (not injected here) — that's deliberate: some mobile WebViews
+// (including Telegram's native app) can treat scripts injected after page
+// load differently than ones present from the start, so we load it the
+// same way Monetag's own install snippet does.
 export const MONETAG_ZONE_ID = import.meta.env.VITE_MONETAG_ZONE_ID || '';
 
 function showFnName(): string {
@@ -20,28 +20,13 @@ export function isMonetagConfigured(): boolean {
   return Boolean(MONETAG_ZONE_ID);
 }
 
-/**
- * Injects the Monetag SDK script tag once. No-ops if no zone ID is set.
- */
-export function ensureMonetagSdk(): void {
-  if (typeof window === 'undefined' || !isMonetagConfigured()) return;
-  if (document.querySelector(`script[data-zone="${MONETAG_ZONE_ID}"]`)) return;
-
-  const script = document.createElement('script');
-  script.src = '//libtl.com/sdk.js';
-  script.setAttribute('data-zone', MONETAG_ZONE_ID);
-  script.setAttribute('data-sdk', showFnName());
-  document.head.appendChild(script);
-}
-
 export function isMonetagReady(): boolean {
   return isMonetagConfigured() && typeof window[showFnName()] === 'function';
 }
 
-/** Waits (briefly) for the SDK script to finish loading and register its function. */
+/** Waits (briefly) for the statically-loaded SDK script to register its function. */
 export function waitForMonetagSdk(timeoutMs = 4000): Promise<boolean> {
   if (isMonetagReady()) return Promise.resolve(true);
-  ensureMonetagSdk();
 
   return new Promise((resolve) => {
     const start = Date.now();

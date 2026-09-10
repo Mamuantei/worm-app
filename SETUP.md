@@ -119,9 +119,14 @@ money payouts. You'll use this username/password inside the app's Admin tab.
    ```
    VITE_API_URL=https://your-backend-url-here
    VITE_MONETAG_ZONE_ID=your-zone-id-here
+   VITE_TELEGRAM_BOT_USERNAME=your-bot-username
    ```
    You don't have the backend URL yet — come back after Step 8 and fill it
    in, then rebuild (Step 9). See **Real Ads Setup** below for the zone ID.
+   `VITE_TELEGRAM_BOT_USERNAME` is your bot's exact username from BotFather
+   (e.g. `Worm776_bot`, no `@` and no `t.me/`) — this is what makes the
+   referral link in the app actually point at your real bot instead of a
+   placeholder.
 2. The Telegram Mini App SDK is loaded automatically when opened inside
    Telegram — no extra setup needed there.
 
@@ -191,6 +196,9 @@ Pick one (Render is the simplest for beginners):
    - Add environment variable `VITE_API_URL` = your backend URL
    - Add environment variable `VITE_MONETAG_ZONE_ID` = your zone ID (once
      you have one — see Real Ads Setup above; safe to leave blank for now)
+   - Add environment variable `VITE_TELEGRAM_BOT_USERNAME` = your bot's
+     username (e.g. `Worm776_bot`) — this makes the in-app referral link
+     point at your real bot instead of a placeholder
    - Deploy. Vercel gives you a URL like `https://worm-app.vercel.app`.
 
 ---

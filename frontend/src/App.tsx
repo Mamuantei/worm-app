@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ActiveTab, UserWallet, WithdrawalRecord, ReferralUser, RegisteredUser } from './types';
 import { getSoundPreference, saveSoundPreference } from './utils/storage';
 import { sounds } from './utils/audio';
-import { ensureMonetagSdk } from './utils/monetag';
+import { isMonetagConfigured } from './utils/monetag';
 import { api, adminRequest } from './utils/api';
 
 import { TelegramHeader } from './components/TelegramHeader';
@@ -126,7 +126,19 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    ensureMonetagSdk();
+    // Telling Telegram the app is ready and expanding to full height is
+    // recommended early setup for Mini Apps (per Telegram's own docs) and
+    // was worth ruling out as a factor in the mobile ad-loading issue.
+    try {
+      const tg = (window as any)?.Telegram?.WebApp;
+      tg?.ready?.();
+      tg?.expand?.();
+    } catch {
+      // Not fatal if this fails — app still works without it.
+    }
+    if (!isMonetagConfigured()) {
+      console.warn('[Monetag] VITE_MONETAG_ZONE_ID is not set — real ads are disabled, falling back to timed unlock.');
+    }
   }, []);
 
   const handleToggleSound = () => {

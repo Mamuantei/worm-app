@@ -7,11 +7,21 @@ import crypto from 'node:crypto';
 //
 // Docs: https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app
 export function verifyTelegramInitData(initData, botToken) {
-  if (!initData || !botToken) return null;
+  if (!initData) {
+    console.log('[telegramAuth] rejected: no initData provided at all');
+    return null;
+  }
+  if (!botToken) {
+    console.log('[telegramAuth] rejected: TELEGRAM_BOT_TOKEN is not set on the server');
+    return null;
+  }
 
   const params = new URLSearchParams(initData);
   const hash = params.get('hash');
-  if (!hash) return null;
+  if (!hash) {
+    console.log('[telegramAuth] rejected: initData had no hash field');
+    return null;
+  }
   params.delete('hash');
 
   const dataCheckArr = [];
@@ -23,16 +33,25 @@ export function verifyTelegramInitData(initData, botToken) {
   const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest();
   const computedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
 
-  if (computedHash !== hash) return null;
+  if (computedHash !== hash) {
+    console.log('[telegramAuth] rejected: hash mismatch — bot token likely does not match the bot that opened this Mini App');
+    return null;
+  }
 
   // Optional: reject stale initData (older than 24h) to limit replay window
   const authDate = Number(params.get('auth_date') || 0);
   const ageSeconds = Date.now() / 1000 - authDate;
-  if (ageSeconds > 60 * 60 * 24) return null;
+  if (ageSeconds > 60 * 60 * 24) {
+    console.log(`[telegramAuth] rejected: initData is stale (${Math.round(ageSeconds)}s old)`);
+    return null;
+  }
 
   const userRaw = params.get('user');
   const user = userRaw ? JSON.parse(userRaw) : null;
-  if (!user || !user.id) return null;
+  if (!user || !user.id) {
+    console.log('[telegramAuth] rejected: no user field in initData');
+    return null;
+  }
 
   return user; // { id, first_name, last_name, username, ... }
 }
