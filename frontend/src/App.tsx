@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ActiveTab, UserWallet, WithdrawalRecord, ReferralUser, RegisteredUser } from './types';
 import { getSoundPreference, saveSoundPreference } from './utils/storage';
 import { sounds } from './utils/audio';
-import { isMonetagConfigured, showRewardedPopup } from './utils/monetag';
+import { isMonetagConfigured } from './utils/monetag';
 import { api, adminRequest } from './utils/api';
 
 import { TelegramHeader } from './components/TelegramHeader';
@@ -14,6 +14,7 @@ import { ReferralScreen } from './components/ReferralScreen';
 import { AdminPortal } from './components/AdminPortal';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdminGateModal } from './components/AdminGateModal';
+import { AdModal } from './components/AdModal';
 import { GuideModal } from './components/GuideModal';
 import { Navigation } from './components/Navigation';
 
@@ -28,6 +29,9 @@ const EMPTY_WALLET: UserWallet = {
   losses: 0,
 };
 
+// The backend doesn't track bankName/routingCode/referenceId separately —
+// they're derived here purely for display, so the existing WalletScreen /
+// AdminPortal UI (which was built around that shape) keeps working.
 function toDisplayRecord(w: any): WithdrawalRecord {
   return {
     id: w.id,
@@ -62,7 +66,7 @@ export default function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [isMatchUnlocked, setIsMatchUnlocked] = useState<boolean>(false);
-  const [isPlayAdLoading, setIsPlayAdLoading] = useState<boolean>(false);
+  const [isAdModalOpen, setIsAdModalOpen] = useState<boolean>(false);
   const [isGuideModalOpen, setIsGuideModalOpen] = useState<boolean>(false);
   const [isAdminGateOpen, setIsAdminGateOpen] = useState<boolean>(false);
   const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState<boolean>(false);
@@ -72,10 +76,16 @@ export default function App() {
   const isAdminUnlocked = Boolean(adminToken);
   const pendingWithdrawalsCount = withdrawals.filter((w) => w.status === 'pending').length;
 
+  // Load the signed-in user's wallet + withdrawals from the backend on start
   useEffect(() => {
     (async () => {
       try {
+        // If someone opened the Mini App via a referral link
+        // (t.me/YourBot/app?startapp=WORM_ABC123), Telegram passes that
+        // code through as start_param — used once to link the new user to
+        // whoever referred them.
         const startParam = (window as any)?.Telegram?.WebApp?.initDataUnsafe?.start_param;
+
         const { user } = await api.getWallet(startParam);
         setWallet({
           balance: user.balance,
@@ -116,15 +126,18 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    // Telling Telegram the app is ready and expanding to full height is
+    // recommended early setup for Mini Apps (per Telegram's own docs) and
+    // was worth ruling out as a factor in the mobile ad-loading issue.
     try {
       const tg = (window as any)?.Telegram?.WebApp;
       tg?.ready?.();
       tg?.expand?.();
     } catch {
-      // Telegram setup is not fatal outside Telegram.
+      // Not fatal if this fails — app still works without it.
     }
     if (!isMonetagConfigured()) {
-      console.warn('[Monetag] Monetag zone is not configured.');
+      console.warn('[Monetag] VITE_MONETAG_ZONE_ID is not set — real ads are disabled, falling back to timed unlock.');
     }
   }, []);
 
@@ -137,38 +150,25 @@ export default function App() {
     });
   };
 
-  // Every Play click opens the Monetag Rewarded Popup directly.
-  // The match is unlocked only after show_11716044('pop') resolves.
-  const handleInitiatePlay = async () => {
-    if (isPlayAdLoading) return;
-
+  const handleInitiatePlay = () => {
     sounds.playClick();
     setIsMatchUnlocked(false);
-    setIsPlayAdLoading(true);
-
-    try {
-      const watched = await showRewardedPopup();
-
-      if (!watched) {
-        console.warn('[Monetag] Rewarded popup was not completed. Match remains locked.');
-        return;
-      }
-
-      try {
-        await api.adComplete();
-      } catch {
-        // The ad was completed; failure to write the optional ledger entry
-        // must not prevent the user from entering the match.
-      }
-
-      sounds.playAdComplete();
-      setIsMatchUnlocked(true);
-      setActiveTab('game');
-    } finally {
-      setIsPlayAdLoading(false);
-    }
+    setIsAdModalOpen(true);
   };
 
+  const handleAdComplete = async () => {
+    try {
+      await api.adComplete();
+    } catch {
+      // Non-fatal: unlocking the match doesn't depend on this ledger write.
+    }
+    setIsMatchUnlocked(true);
+    setIsAdModalOpen(false);
+    setActiveTab('game');
+  };
+
+  // The frontend only reports the game RESULT — the reward amount is
+  // decided entirely on the server (see backend/src/routes/wallet.js).
   const handleGameComplete = useCallback(async (payout: { result: 'win' | 'draw' | 'loss' }) => {
     try {
       const { user } = await api.gameComplete(payout.result);
@@ -355,10 +355,9 @@ export default function App() {
                   </div>
                   <button
                     onClick={handleInitiatePlay}
-                    disabled={isPlayAdLoading}
-                    className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 disabled:opacity-60 disabled:cursor-wait text-white font-black text-sm shadow-xl shadow-sky-500/25 flex items-center justify-center gap-2"
+                    className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-black text-sm shadow-xl shadow-sky-500/25 flex items-center justify-center gap-2"
                   >
-                    <span>{isPlayAdLoading ? 'Loading Rewarded Ad…' : 'Watch Ad to Unlock'}</span>
+                    <span>Watch Ad to Unlock</span>
                   </button>
                   <button onClick={() => setActiveTab('home')} className="text-xs text-slate-400 hover:text-slate-200">
                     Back to Home
@@ -406,6 +405,7 @@ export default function App() {
         </AnimatePresence>
       </main>
 
+      <AdModal isOpen={isAdModalOpen} onAdComplete={handleAdComplete} onClose={() => setIsAdModalOpen(false)} />
       <GuideModal isOpen={isGuideModalOpen} onClose={() => setIsGuideModalOpen(false)} />
       <AdminGateModal isOpen={isAdminGateOpen} onClose={() => setIsAdminGateOpen(false)} onPass={handleAdminGatePass} />
       <AdminLoginModal isOpen={isAdminLoginModalOpen} onClose={() => setIsAdminLoginModalOpen(false)} onSuccess={handleAdminLoginSuccess} />
