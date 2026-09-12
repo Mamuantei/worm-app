@@ -20,6 +20,12 @@
          %VITE_MONETAG_ZONE_ID% is filled in by Vite at build time from
          frontend/.env — see SETUP.md "Real Ads Setup". -->
     <script src="https://libtl.com/sdk.js" data-zone="%VITE_MONETAG_ZONE_ID%" data-sdk="show_%VITE_MONETAG_ZONE_ID%"></script>
+    <!-- TEMPORARY debug console — shows console logs + network requests
+         directly on-screen on your phone, no PC/USB needed. Tap the small
+         floating circle (bottom-right) to open it. REMOVE this once the
+         Monetag mobile issue is solved — see SETUP.md "Removing the debug console". -->
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>eruda.init();</script>
   </head>
   <body class="bg-[#020617] text-slate-100 antialiased min-h-screen">
     <div id="root">
