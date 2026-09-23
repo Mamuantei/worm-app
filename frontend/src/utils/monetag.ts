@@ -8,6 +8,7 @@ declare global {
 
 export const MONETAG_ZONE_ID = import.meta.env.VITE_MONETAG_ZONE_ID || '';
 const MONETAG_ZONE_NUMBER = Number(MONETAG_ZONE_ID);
+const AD_TIMEOUT_MS = 15000;
 
 let adHandler: ReturnType<typeof createAdHandler> | null = null;
 let preloadPromise: Promise<boolean> | null = null;
@@ -46,12 +47,15 @@ export async function preloadRewardedInterstitial(): Promise<boolean> {
 
   preloadPromise = (async () => {
     try {
-      await handler({ type: 'preload', timeout: 5, ymid: getYmid(), requestVar: 'play_match' });
+      await Promise.race([
+        handler({ type: 'preload', timeout: 5, ymid: getYmid(), requestVar: 'play_match' }),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Monetag preload timed out')), AD_TIMEOUT_MS)),
+      ]);
       preloaded = true;
       return true;
     } catch (error) {
       preloaded = false;
-      console.warn('[Monetag] Preload failed:', error);
+      console.error('[Monetag] Preload failed:', error instanceof Error ? error.message : error, error);
       return false;
     } finally {
       preloadPromise = null;
@@ -79,9 +83,8 @@ export async function showRewardedInterstitial(): Promise<boolean> {
 
   try {
     const ymid = getYmid();
-    // Default handler() is the Rewarded Interstitial. The SDK's 'end' mode is
-    // a different ad trigger, so do not use it for the rewarded game unlock.
-    const show = () => handler({ ymid, requestVar: 'play_match' });
+    // Monetag documents 'end' as the Rewarded Interstitial mode.
+    const show = () => handler({ type: 'end', ymid, requestVar: 'play_match', catchIfNoFeed: true });
 
     // Prefer the preloaded ad. If preload was not ready, make one last attempt
     // immediately so a slow startup does not permanently block the player.
@@ -92,13 +95,13 @@ export async function showRewardedInterstitial(): Promise<boolean> {
     await Promise.race([
       show(),
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Monetag ad request timed out')), 12000)
+        setTimeout(() => reject(new Error('Monetag ad request timed out')), AD_TIMEOUT_MS)
       ),
     ]);
     preloaded = false;
     return true;
   } catch (error) {
-    console.warn('[Monetag] Rewarded interstitial failed:', error);
+    console.error('[Monetag] Rewarded interstitial failed:', error instanceof Error ? error.message : error, error);
     return false;
   }
 }
