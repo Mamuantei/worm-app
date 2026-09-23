@@ -1,3 +1,5 @@
+import createAdHandler from 'monetag-tg-sdk';
+
 declare global {
   interface Window {
     [key: string]: any;
@@ -6,8 +8,16 @@ declare global {
 
 export const MONETAG_ZONE_ID = import.meta.env.VITE_MONETAG_ZONE_ID || '';
 
-function showFnName(): string {
-  return `show_${MONETAG_ZONE_ID}`;
+let adHandler: ReturnType<typeof createAdHandler> | null = null;
+
+function getAdHandler() {
+  if (!MONETAG_ZONE_ID) return null;
+
+  if (!adHandler) {
+    adHandler = createAdHandler(MONETAG_ZONE_ID);
+  }
+
+  return adHandler;
 }
 
 export function isMonetagConfigured(): boolean {
@@ -15,44 +25,27 @@ export function isMonetagConfigured(): boolean {
 }
 
 export function isMonetagReady(): boolean {
-  return isMonetagConfigured() && typeof window[showFnName()] === 'function';
+  return Boolean(getAdHandler());
 }
 
 /**
- * Wait for the Monetag SDK to register the rewarded interstitial function.
- * The SDK tag is loaded statically from index.html.
- */
-export function waitForMonetagSdk(timeoutMs = 10000): Promise<boolean> {
-  if (isMonetagReady()) return Promise.resolve(true);
-
-  return new Promise((resolve) => {
-    const start = Date.now();
-    const interval = setInterval(() => {
-      if (isMonetagReady() || Date.now() - start >= timeoutMs) {
-        clearInterval(interval);
-        resolve(isMonetagReady());
-      }
-    }, 100);
-  });
-}
-
-/**
- * Shows the Monetag Rewarded Interstitial.
+ * Shows a Monetag Rewarded Interstitial using the official
+ * Monetag Telegram Mini App SDK package.
  *
- * Monetag's Rewarded Interstitial example calls show_<zoneId>()
- * without the 'pop' argument. The 'pop' argument belongs to the
- * Rewarded Popup flow, so do not pass it here.
+ * The package handles SDK initialization for React apps, avoiding
+ * reliance on a global window.show_<zoneId> function created by a
+ * static script tag.
  */
 export async function showRewardedInterstitial(): Promise<boolean> {
-  const ready = await waitForMonetagSdk();
+  const handler = getAdHandler();
 
-  if (!ready) {
-    console.warn(`[Monetag] show_${MONETAG_ZONE_ID} is not available.`);
+  if (!handler) {
+    console.warn('[Monetag] Zone ID is not configured.');
     return false;
   }
 
   try {
-    await window[showFnName()]();
+    await handler();
     return true;
   } catch (error) {
     console.warn('[Monetag] Rewarded interstitial failed:', error);
