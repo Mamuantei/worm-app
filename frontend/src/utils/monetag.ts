@@ -7,6 +7,7 @@ declare global {
 }
 
 export const MONETAG_ZONE_ID = import.meta.env.VITE_MONETAG_ZONE_ID || '';
+const MONETAG_ZONE_NUMBER = Number(MONETAG_ZONE_ID);
 
 let adHandler: ReturnType<typeof createAdHandler> | null = null;
 let preloadPromise: Promise<boolean> | null = null;
@@ -18,10 +19,11 @@ function getYmid(): string {
 }
 
 function getAdHandler() {
-  if (!MONETAG_ZONE_ID) return null;
+  if (!MONETAG_ZONE_ID || !Number.isFinite(MONETAG_ZONE_NUMBER) || MONETAG_ZONE_NUMBER <= 0) return null;
 
   if (!adHandler) {
-    adHandler = createAdHandler(MONETAG_ZONE_ID);
+    // The official SDK expects the zone ID as a number.
+    adHandler = createAdHandler(MONETAG_ZONE_NUMBER);
   }
 
   return adHandler;
@@ -77,7 +79,9 @@ export async function showRewardedInterstitial(): Promise<boolean> {
 
   try {
     const ymid = getYmid();
-    const show = () => handler({ type: 'end', ymid, requestVar: 'play_match' });
+    // Default handler() is the Rewarded Interstitial. The SDK's 'end' mode is
+    // a different ad trigger, so do not use it for the rewarded game unlock.
+    const show = () => handler({ ymid, requestVar: 'play_match' });
 
     // Prefer the preloaded ad. If preload was not ready, make one last attempt
     // immediately so a slow startup does not permanently block the player.
