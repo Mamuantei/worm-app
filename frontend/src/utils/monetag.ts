@@ -1,18 +1,10 @@
 import createAdHandler from 'monetag-tg-sdk';
 
-declare global {
-  interface Window {
-    [key: string]: any;
-  }
-}
-
 export const MONETAG_ZONE_ID = import.meta.env.VITE_MONETAG_ZONE_ID || '';
 const MONETAG_ZONE_NUMBER = Number(MONETAG_ZONE_ID);
-const AD_TIMEOUT_MS = 15000;
+const AD_TIMEOUT_MS = 20000;
 
 let adHandler: ReturnType<typeof createAdHandler> | null = null;
-let preloadPromise: Promise<boolean> | null = null;
-let preloaded = false;
 
 function getYmid(): string {
   const userId = (window as any)?.Telegram?.WebApp?.initDataUnsafe?.user?.id;
@@ -20,10 +12,11 @@ function getYmid(): string {
 }
 
 function getAdHandler() {
-  if (!MONETAG_ZONE_ID || !Number.isFinite(MONETAG_ZONE_NUMBER) || MONETAG_ZONE_NUMBER <= 0) return null;
+  if (!MONETAG_ZONE_ID || !Number.isFinite(MONETAG_ZONE_NUMBER) || MONETAG_ZONE_NUMBER <= 0) {
+    return null;
+  }
 
   if (!adHandler) {
-    // The official SDK expects the zone ID as a number.
     adHandler = createAdHandler(MONETAG_ZONE_NUMBER);
   }
 
@@ -35,43 +28,16 @@ export function isMonetagConfigured(): boolean {
 }
 
 export function isMonetagReady(): boolean {
-  return Boolean(getAdHandler()) && preloaded;
-}
-
-/** Preload a rewarded interstitial before the user presses Play. */
-export async function preloadRewardedInterstitial(): Promise<boolean> {
-  const handler = getAdHandler();
-  if (!handler) return false;
-  if (preloaded) return true;
-  if (preloadPromise) return preloadPromise;
-
-  preloadPromise = (async () => {
-    try {
-      await Promise.race([
-        handler({ type: 'preload', timeout: 5, ymid: getYmid(), requestVar: 'play_match' }),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Monetag preload timed out')), AD_TIMEOUT_MS)),
-      ]);
-      preloaded = true;
-      return true;
-    } catch (error) {
-      preloaded = false;
-      console.error('[Monetag] Preload failed:', error instanceof Error ? error.message : error, error);
-      return false;
-    } finally {
-      preloadPromise = null;
-    }
-  })();
-
-  return preloadPromise;
+  return Boolean(getAdHandler());
 }
 
 /**
- * Shows a Monetag Rewarded Interstitial using the official
- * Monetag Telegram Mini App SDK package.
+ * Show a Monetag Rewarded Interstitial.
  *
- * The package handles SDK initialization for React apps, avoiding
- * reliance on a global window.show_<zoneId> function created by a
- * static script tag.
+ * IMPORTANT:
+ * This is intentionally called directly from the user's Play button flow.
+ * We do not preload the ad because a preload that never resolves can make
+ * the whole reward flow time out before the actual ad request is attempted.
  */
 export async function showRewardedInterstitial(): Promise<boolean> {
   const handler = getAdHandler();
@@ -82,26 +48,29 @@ export async function showRewardedInterstitial(): Promise<boolean> {
   }
 
   try {
-    const ymid = getYmid();
-    // Monetag documents 'end' as the Rewarded Interstitial mode.
-    const show = () => handler({ type: 'end', ymid, requestVar: 'play_match', catchIfNoFeed: true });
+    console.log('[Monetag] Requesting Rewarded Interstitial', {
+      zone: MONETAG_ZONE_NUMBER,
+      ymid: getYmid(),
+      telegram: Boolean((window as any)?.Telegram?.WebApp),
+    });
 
-    // Prefer the preloaded ad. If preload was not ready, make one last attempt
-    // immediately so a slow startup does not permanently block the player.
-    if (!preloaded) {
-      await preloadRewardedInterstitial();
-    }
-
+    // The official Telegram SDK package documents handler() as the
+    // Rewarded Interstitial call. Keep this as the simplest supported path.
     await Promise.race([
-      show(),
+      handler(),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Monetag ad request timed out')), AD_TIMEOUT_MS)
       ),
     ]);
-    preloaded = false;
+
+    console.log('[Monetag] Rewarded Interstitial completed successfully.');
     return true;
   } catch (error) {
-    console.error('[Monetag] Rewarded interstitial failed:', error instanceof Error ? error.message : error, error);
+    console.error(
+      '[Monetag] Rewarded interstitial failed:',
+      error instanceof Error ? error.message : error,
+      error
+    );
     return false;
   }
 }
