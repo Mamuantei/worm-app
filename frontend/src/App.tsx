@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ActiveTab, UserWallet, WithdrawalRecord, ReferralUser, RegisteredUser } from './types';
 import { getSoundPreference, saveSoundPreference } from './utils/storage';
 import { sounds } from './utils/audio';
-import { isMonetagConfigured, preloadRewardedInterstitial } from './utils/monetag';
+import { isMonetagConfigured, showRewardedInterstitial } from './utils/monetag';
 import { api, adminRequest } from './utils/api';
 
 import { TelegramHeader } from './components/TelegramHeader';
@@ -66,7 +66,7 @@ export default function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [isMatchUnlocked, setIsMatchUnlocked] = useState<boolean>(false);
-  const [isAdModalOpen, setIsAdModalOpen] = useState<boolean>(false);
+  const [isAdModalOpen, setIsAdModalOpen] = useState<boolean>(false);\n  const [adStartPromise, setAdStartPromise] = useState<Promise<boolean> | null>(null);
   const [isGuideModalOpen, setIsGuideModalOpen] = useState<boolean>(false);
   const [isAdminGateOpen, setIsAdminGateOpen] = useState<boolean>(false);
   const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState<boolean>(false);
@@ -411,7 +411,7 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      <AdModal isOpen={isAdModalOpen} onAdComplete={handleAdComplete} onClose={() => setIsAdModalOpen(false)} />
+      <AdModal\n        isOpen={isAdModalOpen}\n        adStartPromise={adStartPromise}\n        onAdComplete={handleAdComplete}\n        onClose={() => setIsAdModalOpen(false)}\n      />
       <GuideModal isOpen={isGuideModalOpen} onClose={() => setIsGuideModalOpen(false)} />
       <AdminGateModal isOpen={isAdminGateOpen} onClose={() => setIsAdminGateOpen(false)} onPass={handleAdminGatePass} />
       <AdminLoginModal isOpen={isAdminLoginModalOpen} onClose={() => setIsAdminLoginModalOpen(false)} onSuccess={handleAdminLoginSuccess} />
