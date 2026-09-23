@@ -45,7 +45,15 @@ export async function showRewardedInterstitial(): Promise<boolean> {
   }
 
   try {
-    await handler();
+    // Do not let a Telegram WebView / ad-network initialization hang the game forever.
+    // If Monetag does not resolve within 12 seconds, treat it as unavailable and
+    // let the UI show the retry/fallback options.
+    await Promise.race([
+      handler(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Monetag ad request timed out')), 12000)
+      ),
+    ]);
     return true;
   } catch (error) {
     console.warn('[Monetag] Rewarded interstitial failed:', error);
