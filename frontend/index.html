@@ -13,17 +13,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Static Monetag install tag, exactly matching their official
-         snippet — using a script already present in the page from the
-         start (rather than one injected by JS after load) rules out any
-         WebView restriction on runtime-injected third-party scripts.
-         %VITE_MONETAG_ZONE_ID% is filled in by Vite at build time from
-         frontend/.env — see SETUP.md "Real Ads Setup". -->
-    <script src="https://libtl.com/sdk.js" data-zone="%VITE_MONETAG_ZONE_ID%" data-sdk="show_%VITE_MONETAG_ZONE_ID%"></script>
-    <!-- TEMPORARY debug console — shows console logs + network requests
-         directly on-screen on your phone, no PC/USB needed. Tap the small
-         floating circle (bottom-right) to open it. REMOVE this once the
-         Monetag mobile issue is solved — see SETUP.md "Removing the debug console". -->
+    <!-- Monetag is loaded through the official monetag-tg-sdk React package.
+         Keeping only one SDK integration avoids conflicting static and
+         package-based SDK initialization in Telegram WebView. -->
+    <!-- TEMPORARY debug console — remove after Monetag mobile testing. -->
     <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
     <script>eruda.init();</script>
   </head>
@@ -37,7 +30,7 @@
       setTimeout(function () {
         var root = document.getElementById('root');
         if (root && root.querySelector('#startup-loader')) {
-          root.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#020617;color:#94a3b8;font-family:Arial,sans-serif;padding:24px"><div style="text-align:center"><div style="font-size:18px;font-weight:700;color:#fff">Worm</div><div style="margin-top:8px;font-size:13px">The app did not start. <button onclick="location.reload()" style="margin-top:14px;padding:10px 18px;border:0;border-radius:10px;background:#0ea5e9;color:#fff;font-weight:700;cursor:pointer">Retry</button></div></div></div>';
+          root.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#020617;color:#94a3b8;font-family:Arial,sans-serif;padding:24px"><div style="text-align:center"><div style="font-size:18px;font-weight:700;color:#fff">Worm</div><div style="margin-top:14px"><button onclick="location.reload()" style="padding:10px 18px;border:0;border-radius:10px;background:#0ea5e9;color:#fff;font-weight:700;cursor:pointer">Retry</button></div></div></div>';
         }
       }, 12000);
     </script>
