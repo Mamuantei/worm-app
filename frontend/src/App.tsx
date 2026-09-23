@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ActiveTab, UserWallet, WithdrawalRecord, ReferralUser, RegisteredUser } from './types';
 import { getSoundPreference, saveSoundPreference } from './utils/storage';
 import { sounds } from './utils/audio';
-import { isMonetagConfigured } from './utils/monetag';
+import { isMonetagConfigured, preloadRewardedInterstitial } from './utils/monetag';
 import { api, adminRequest } from './utils/api';
 
 import { TelegramHeader } from './components/TelegramHeader';
@@ -138,7 +138,13 @@ export default function App() {
     }
     if (!isMonetagConfigured()) {
       console.warn('[Monetag] VITE_MONETAG_ZONE_ID is not set — real ads are disabled, falling back to timed unlock.');
+      return;
     }
+
+    // Preload the rewarded ad while the player is on the home screen.
+    preloadRewardedInterstitial().catch(() => {
+      // AdModal retries when the user presses Play.
+    });
   }, []);
 
   const handleToggleSound = () => {
