@@ -1,15 +1,9 @@
 declare global {
   interface Window {
-    [key: string]: any; // Monetag registers a function named `show_<zoneId>`
+    [key: string]: any;
   }
 }
 
-// Your real Monetag zone ID, set in frontend/.env as VITE_MONETAG_ZONE_ID
-// (see SETUP.md "Real Ads Setup"). The actual <script> tag is static in
-// index.html (not injected here) — that's deliberate: some mobile WebViews
-// (including Telegram's native app) can treat scripts injected after page
-// load differently than ones present from the start, so we load it the
-// same way Monetag's own install snippet does.
 export const MONETAG_ZONE_ID = import.meta.env.VITE_MONETAG_ZONE_ID || '';
 
 function showFnName(): string {
@@ -24,7 +18,10 @@ export function isMonetagReady(): boolean {
   return isMonetagConfigured() && typeof window[showFnName()] === 'function';
 }
 
-/** Waits (briefly) for the statically-loaded SDK script to register its function. */
+/**
+ * Wait for the Monetag SDK to register the rewarded interstitial function.
+ * The SDK tag is loaded statically from index.html.
+ */
 export function waitForMonetagSdk(timeoutMs = 10000): Promise<boolean> {
   if (isMonetagReady()) return Promise.resolve(true);
 
@@ -40,23 +37,25 @@ export function waitForMonetagSdk(timeoutMs = 10000): Promise<boolean> {
 }
 
 /**
- * Shows the Monetag Rewarded Popup ad — passing 'pop' selects this format,
- * where the user is sent directly to an offer page on click rather than
- * seeing an inline interstitial. Wrapped so the caller gets a simple
- * true/false instead of having to handle the Promise directly.
+ * Shows the Monetag Rewarded Interstitial.
+ *
+ * Monetag's Rewarded Interstitial example calls show_<zoneId>()
+ * without the 'pop' argument. The 'pop' argument belongs to the
+ * Rewarded Popup flow, so do not pass it here.
  */
 export async function showRewardedInterstitial(): Promise<boolean> {
   const ready = await waitForMonetagSdk();
+
   if (!ready) {
     console.warn(`[Monetag] show_${MONETAG_ZONE_ID} is not available.`);
     return false;
   }
 
   try {
-    await window[showFnName()]('pop');
-    return true; // user watched the ad / completed the popup flow
+    await window[showFnName()]();
+    return true;
   } catch (error) {
-    console.warn('[Monetag] Rewarded popup failed:', error);
-    return false; // ad failed to load / was skipped / no fill
+    console.warn('[Monetag] Rewarded interstitial failed:', error);
+    return false;
   }
 }
