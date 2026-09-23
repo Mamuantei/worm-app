@@ -14,7 +14,7 @@ type Phase = 'loading' | 'watched' | 'unavailable' | 'timerFallback';
 
 const FALLBACK_SECONDS = 5;
 
-export const AdModal: React.FC<AdModalProps> = ({ isOpen, onAdComplete, onClose }) => {
+export const AdModal: React.FC<AdModalProps> = ({ isOpen, adStartPromise, onAdComplete, onClose }) => {
   const [phase, setPhase] = useState<Phase>('loading');
   const [secondsLeft, setSecondsLeft] = useState(FALLBACK_SECONDS);
   const startedRef = useRef(false);
